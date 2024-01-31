@@ -232,7 +232,14 @@ public class WorldModel extends SimState {
 //		}
 //		System.out.println(bestParam[0]+" "+bestParam[1]+" "+bestParam[2]+" ");
 //		System.out.println(best[0]+"|"+best[1]);
-		sourcing.sort(0.9,0.0,0.1);
+		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
+				+ params.numRestaurantsPer1000;
+
+		double ratio1 = params.numOfAgents / sum ;
+		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
+		double ratio3 =  params.numRestaurantsPer1000/sum;
+//		sourcing.sort(0.8,0.1,0.1);
+		sourcing.sort(ratio1, ratio2, ratio3);
 		sourcing.show(diseaseSource.getId());
 		super.finish();
 		try {
@@ -575,6 +582,7 @@ public class WorldModel extends SimState {
 		}
 
 		// Work Graph
+
 		visualWorkGraph = new SingleGraph("Social Network: Work");
 		visualWorkGraph.addAttribute("ui.stylesheet", css);
 		if (params.isWorkGraphVisible)
