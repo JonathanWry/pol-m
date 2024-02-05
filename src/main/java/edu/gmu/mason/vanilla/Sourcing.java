@@ -111,6 +111,7 @@ public class Sourcing {
 //            System.out.println(curStat.infectedVisits);
 //            System.out.println(curStat.uninfectedVisits);
         }
+//
     }
 }
 class CustomComparator implements Comparator<BuildingUnitStats> {

@@ -117,7 +117,7 @@ public class Person implements Steppable, java.io.Serializable {
 	private Disease disease;
 	private boolean isInfected=false;
 	private TrackTrace trackTrace;
-	private static final int startDayAfterInitialization=2;
+	private int startDayAfterInitialization;
 	private int initDate;
 	/**
 	 * Constructor to call when creating an agent that is single. Use
@@ -162,9 +162,10 @@ public class Person implements Steppable, java.io.Serializable {
 		this.plans = new HashMap<>();
 		this.visitReason = VisitReason.None;
 		this.instructionQueue = new InstructionQueue();
+		this.startDayAfterInitialization=this.model.params.warmupPeriodEndTime.getDayOfYear()-this.model.getDay()>0?this.model.params.warmupPeriodEndTime.getDayOfYear()-this.model.getDay():0;//set startdate after initialization of disease to start of
 		this.disease=new Disease(this, diseaseSource,startDayAfterInitialization);
 		this.trackTrace=new TrackTrace(this);
-		this.initDate=getSimulationTime().getDayOfYear()+startDayAfterInitialization;
+		this.initDate=this.model.params.warmupPeriodEndTime.getDayOfYear();
 	}
 
 	/**
@@ -200,8 +201,12 @@ public class Person implements Steppable, java.io.Serializable {
 	 */
 	@Override
 	public void step(SimState model) {
-		if(this.model.getSimulationTime().getDayOfYear()-initDate>10){
-			this.model.finish();
+		if(this.model.getSimulationTime().getDayOfYear()-initDate>10&&(!this.model.traced)){
+//			this.model.finish();
+			this.model.traceBack();
+			this.model.traced=false;
+			//todo: add signal to hint finish
+
 		}
 		preStepRoutines();
 

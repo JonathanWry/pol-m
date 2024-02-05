@@ -128,6 +128,7 @@ public class WorldModel extends SimState {
 	private Random rand=new Random();
 	private BuildingUnit diseaseSource;
 	private Sourcing sourcing=new Sourcing();
+	public boolean traced=false;
 
 	public WorldModel(long seed, WorldParameters params) throws IOException,
 			Exception {
@@ -199,6 +200,33 @@ public class WorldModel extends SimState {
 				.loadFromConfig(params.additionalManipulationFilePath));
 	}
 
+	public void traceBack(){
+		System.out.println(diseaseSource.getId()+"=========");
+		sourcing.setTotalAgent(agents.size());
+		for(Person agent:agents.values()){
+//			if(agent.getInfected()){
+//				System.out.println("AgentId"+agent.getAgentId()+" track:"+agent.getTrack().size());
+//				ArrayList<DailyTrack> track = agent.getTrack();
+//				for(int i=0;i<track.size();i++){
+//					DailyTrack dailyTrack=track.get(i);
+//					System.out.println("Date:"+dailyTrack.getDate()+" Locations:"+dailyTrack.getDayTrack().toString());
+//				}
+//			}
+			sourcing.appendAgentInfo(agent);
+		}
+		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
+				+ params.numRestaurantsPer1000;
+
+		double ratio1 = params.numOfAgents / sum ;
+		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
+		double ratio3 =  params.numRestaurantsPer1000/sum;
+//		sourcing.sort(0.8,0.1,0.1);
+//		System.out.println("executed");
+		sourcing.sort(ratio1, ratio2, ratio3);
+//		System.out.println("executed");
+		sourcing.show(diseaseSource.getId());
+		System.exit(0);
+	}
 	@Override
 	public void finish() {
 		System.out.println(diseaseSource.getId()+"=========");
@@ -232,15 +260,15 @@ public class WorldModel extends SimState {
 //		}
 //		System.out.println(bestParam[0]+" "+bestParam[1]+" "+bestParam[2]+" ");
 //		System.out.println(best[0]+"|"+best[1]);
-		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
-				+ params.numRestaurantsPer1000;
-
-		double ratio1 = params.numOfAgents / sum ;
-		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
-		double ratio3 =  params.numRestaurantsPer1000/sum;
-//		sourcing.sort(0.8,0.1,0.1);
-		sourcing.sort(ratio1, ratio2, ratio3);
-		sourcing.show(diseaseSource.getId());
+//		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
+//				+ params.numRestaurantsPer1000;
+//
+//		double ratio1 = params.numOfAgents / sum ;
+//		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
+//		double ratio3 =  params.numRestaurantsPer1000/sum;
+////		sourcing.sort(0.8,0.1,0.1);
+//		sourcing.sort(ratio1, ratio2, ratio3);
+//		sourcing.show(diseaseSource.getId());
 		super.finish();
 		try {
 			if (visualFriendFamilyGraph != null && visualWorkGraph != null) {
@@ -1771,7 +1799,16 @@ public class WorldModel extends SimState {
 	}
 
 	public static void main(String[] args) {
-		doLoop(WorldModel.class, args);
+//		String[] modifiedArgs=new String[args.length+2];
+//		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
+//		modifiedArgs[args.length] = "-until";
+//		modifiedArgs[args.length + 1] = "8060";
+//		doLoop(WorldModel.class, modifiedArgs);
+		String[] modifiedArgs = new String[args.length + 1];
+		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
+		modifiedArgs[args.length] = "--add-opens=java.base/java.util=ALL-UNNAMED";
+		doLoop(WorldModel.class, modifiedArgs);
+//		doLoop(WorldModel.class, args);
 		System.exit(0);
 	}
 

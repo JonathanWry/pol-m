@@ -26,14 +26,14 @@ public class Disease {
     public Disease(Person agent, BuildingUnit diesaseSource, int startDayAfterInitialization){
         this.agent=agent;
         //this.infected=false;
-        this.initTime=agent.getSimulationTime().getDayOfYear()+startDayAfterInitialization;
+        this.initTime=agent.getSimulationTime().getDayOfYear()+startDayAfterInitialization;// beginning date of infection
         this.diseaseSource=diesaseSource;
         this.LastDate=agent.getSimulationTime().getDayOfYear();
         this.rand=new Random();
     }
 
     public void update(){
-        if(agent.getSimulationTime().getDayOfYear()-initTime>0){
+        if(agent.getSimulationTime().getDayOfYear()-initTime>0){ //not started yet
             BuildingUnit currentUnit=this.agent.getCurrentUnit();
             if(this.agent.getInfected()){
                 if(agent.getSimulationTime().getDayOfYear()>LastDate){
@@ -42,7 +42,7 @@ public class Disease {
                 }
                 //todo: infecting other people; Recovery;
             }else{
-                if(currentUnit.getId()==diseaseSource.getId()){
+                if(currentUnit.getId()==diseaseSource.getId()){// start infecting
                     float p=rand.nextFloat();
                     if(p<0.9){
                         //infected=true;

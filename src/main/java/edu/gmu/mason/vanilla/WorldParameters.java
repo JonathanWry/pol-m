@@ -37,14 +37,14 @@ public class WorldParameters extends AnnotatedPropertied {
 	public static final int ONE_STEP_TIME = 5;
 	public static final LocalDateTime INITIAL_SIMULATION_TIME = LocalDateTime.parse("2019-07-01");
 	public static final LocalDateTime WARMUP_PERIOD_END_TIME = LocalDateTime.parse("2019-07-31");
-	public static final long MAX_SIMULATIONSTEPS = 105120;//105120
+	public static final long MAX_SIMULATIONSTEPS = 10;//105120
 
 	// ENVIRONMENT
 	public static final int NUM_APARTMENTS_PER_1000 = 200;
 	public static final int NUM_WORKPLACES_PER_1000 = 250;
 	public static final int NUM_PUBS_PER_1000 = 10;
-	public static final int NUM_RESTAURANTS_PER_1000 = 100;
-	public static final int NUM_OF_AGENTS = 400;
+	public static final int NUM_RESTAURANTS_PER_1000 = 20;
+	public static final int NUM_OF_AGENTS = 250;
 	public static final int NUM_OF_AGENT_INTERESTS = 10;
 	public static final double BASE_RENT_RATE = 500;
 	public static final String DEFAULT_MAPS = "campus_data";
