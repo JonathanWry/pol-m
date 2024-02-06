@@ -118,7 +118,7 @@ public class Person implements Steppable, java.io.Serializable {
 	private boolean isInfected=false;
 	private TrackTrace trackTrace;
 	private int startDayAfterInitialization;
-	private int initDate;
+	private LocalDateTime initDate;
 	/**
 	 * Constructor to call when creating an agent that is single. Use
 	 * {@code Person(WorldModel model, long id, Family family) } for
@@ -162,10 +162,13 @@ public class Person implements Steppable, java.io.Serializable {
 		this.plans = new HashMap<>();
 		this.visitReason = VisitReason.None;
 		this.instructionQueue = new InstructionQueue();
-		this.startDayAfterInitialization=this.model.params.warmupPeriodEndTime.getDayOfYear()-this.model.getDay()>0?this.model.params.warmupPeriodEndTime.getDayOfYear()-this.model.getDay():0;//set startdate after initialization of disease to start of
-		this.disease=new Disease(this, diseaseSource,startDayAfterInitialization);
+//		System.out.println("model.getSimulationTime()"+model.getSimulationTime());
+		this.initDate=this.model.params.warmupPeriodEndTime;
+		this.startDayAfterInitialization=this.model.params.warmupPeriodEndTime.compareTo(model.getSimulationTime())>0?this.model.params.warmupPeriodEndTime.getDayOfYear()-this.model.getSimulationTime().getDayOfYear():0;//set startdate after initialization of disease to start of
+//		System.out.println("StartDayafterInitial"+startDayAfterInitialization);
+		this.disease=new Disease(this, diseaseSource,initDate);
 		this.trackTrace=new TrackTrace(this);
-		this.initDate=this.model.params.warmupPeriodEndTime.getDayOfYear();
+//		System.out.println("WarmupEndTime"+this.model.params.warmupPeriodEndTime.toString());
 	}
 
 	/**
@@ -201,7 +204,10 @@ public class Person implements Steppable, java.io.Serializable {
 	 */
 	@Override
 	public void step(SimState model) {
-		if(this.model.getSimulationTime().getDayOfYear()-initDate>10&&(!this.model.traced)){
+//		System.out.println(this.model.getFormattedDateTime().toString());
+		if(this.model.getSimulationTime().getDayOfYear()-initDate.getDayOfYear()>10&&(!this.model.traced)){
+//			System.out.println("ENDTIME:"+this.model.getSimulationTime());
+//			System.out.printf("=====");
 //			this.model.finish();
 			this.model.traceBack();
 			this.model.traced=false;

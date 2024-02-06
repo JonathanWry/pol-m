@@ -204,27 +204,56 @@ public class WorldModel extends SimState {
 		System.out.println(diseaseSource.getId()+"=========");
 		sourcing.setTotalAgent(agents.size());
 		for(Person agent:agents.values()){
-//			if(agent.getInfected()){
-//				System.out.println("AgentId"+agent.getAgentId()+" track:"+agent.getTrack().size());
-//				ArrayList<DailyTrack> track = agent.getTrack();
-//				for(int i=0;i<track.size();i++){
-//					DailyTrack dailyTrack=track.get(i);
-//					System.out.println("Date:"+dailyTrack.getDate()+" Locations:"+dailyTrack.getDayTrack().toString());
-//				}
-//			}
 			sourcing.appendAgentInfo(agent);
 		}
 		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
 				+ params.numRestaurantsPer1000;
+		// TODO: fix this part and add remote.lock file in folder run then push to GitHub.
+		// make sure to remove the remote.lock file after you could see the results on target folder.
+		// ratio1, ratio2, ratio3 are the weigth that is x+y+z=1
+		String fileContent = "sourceId, foundPos,foundPosId, placeRank, placeRatio, ratio1, ratio2, ratio3, params\n";
+		String line = "";
+		double portion = 0.05;
+		for (double i = 0; i < 1; i += portion) {
+			for (double j = 0; j + i < 1; j += portion) {
+				for (double k = 0; k + i + j < 1; k += portion) {
+					double ratioSet[] = { i, j, k };
 
-		double ratio1 = params.numOfAgents / sum ;
-		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
-		double ratio3 =  params.numRestaurantsPer1000/sum;
-//		sourcing.sort(0.8,0.1,0.1);
-//		System.out.println("executed");
-		sourcing.sort(ratio1, ratio2, ratio3);
-//		System.out.println("executed");
-		sourcing.show(diseaseSource.getId());
+					double[] bestParam = new double[3];
+					// make different permutation of the ratio
+//					for (int r =0;r<2;r++){ // this makes sure the permutaion are different
+//						int[] index = {0,1,2};
+//						for (int a = 0; a < 3; a++) {
+//							int b = a + rand.nextInt(3 - a);
+//							int temp = index[a];
+//							index[a] = index[b];
+//							index[b] = temp;
+//
+//							double ratio1 = ratioSet[index[0]];
+//							double ratio2 = ratioSet[index[1]];
+//							double ratio3 = ratioSet[index[2]];
+							double ratio1 = ratioSet[0];
+							double ratio2 = ratioSet[1];
+							double ratio3 = ratioSet[2];
+							sourcing.sort(ratio1, ratio2, ratio3);
+//							sourcing.show(diseaseSource.getId());
+							long sourceId = diseaseSource.getId();
+							//TODO: Is foundPos the top ranked id?
+							double foundPos = sourcing.topRate();
+							long foundPosId = sourcing.topId();
+							double[] res=(sourcing.findPos(sourceId));
+							int placeRank = (int)res[0];
+							double placeRatio = res[1];
+							line = sourcing.getString(sourceId, foundPos,foundPosId, placeRank, placeRatio, ratio1, ratio2, ratio3, params);
+							fileContent += line;
+//						}
+//					}
+
+				}
+			}
+		}
+		System.out.println(fileContent);
+		sourcing.writeToFile(fileContent, "sourcing.csv");
 		System.exit(0);
 	}
 	@Override

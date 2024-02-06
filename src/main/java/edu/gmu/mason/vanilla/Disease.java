@@ -2,6 +2,7 @@ package edu.gmu.mason.vanilla;
 
 import edu.gmu.mason.vanilla.environment.BuildingUnit;
 import edu.gmu.mason.vanilla.log.Skip;
+import org.joda.time.LocalDateTime;
 
 import java.util.Random;
 
@@ -18,24 +19,27 @@ public class Disease {
     private Person agent;
     //private boolean infected;
     public int period;
-    private int initTime;
+    private LocalDateTime initTime;
     private int LastDate;
     private BuildingUnit diseaseSource;
     private Random rand;
 
-    public Disease(Person agent, BuildingUnit diesaseSource, int startDayAfterInitialization){
+    public Disease(Person agent, BuildingUnit diesaseSource, LocalDateTime initTime){
         this.agent=agent;
         //this.infected=false;
-        this.initTime=agent.getSimulationTime().getDayOfYear()+startDayAfterInitialization;// beginning date of infection
+        this.initTime=initTime;// beginning date of infection
         this.diseaseSource=diesaseSource;
         this.LastDate=agent.getSimulationTime().getDayOfYear();
         this.rand=new Random();
     }
 
     public void update(){
-        if(agent.getSimulationTime().getDayOfYear()-initTime>0){ //not started yet
+        //TODO: Not even starting!!
+        if(agent.getSimulationTime().getDayOfYear()-initTime.getDayOfYear()>0){ // started
+
             BuildingUnit currentUnit=this.agent.getCurrentUnit();
             if(this.agent.getInfected()){
+//                System.out.println("Infected");
                 if(agent.getSimulationTime().getDayOfYear()>LastDate){
                     period+=1;
                     LastDate++;
