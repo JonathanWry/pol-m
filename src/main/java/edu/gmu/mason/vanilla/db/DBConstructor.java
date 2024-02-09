@@ -1,6 +1,4 @@
-package edu.gmu.
-
-		mason.vanilla.db;
+package edu.gmu.mason.vanilla.db;
 
 import com.google.gson.GsonBuilder;
 import com.vividsolutions.jts.geom.Geometry;
@@ -28,7 +26,7 @@ import java.util.zip.ZipInputStream;
  * 
  */
 public class DBConstructor implements AutoCloseable {
-	private String[] archive_log_dir = {Constants.LOG_DIR};
+	private String[] archive_log_dir = { Constants.LOG_DIR };
 	private PrintStream out;
 	private int batchSize = 10000;
 	private String delimiter = ";";
@@ -73,7 +71,7 @@ public class DBConstructor implements AutoCloseable {
 			}
 		}
 	}
-	
+
 	public void createIndex() throws FileNotFoundException, IOException, SQLException {
 		File directory = new File(Constants.SCHEMA_DIR);
 		if (directory.exists() && directory.isDirectory()) {
@@ -93,7 +91,7 @@ public class DBConstructor implements AutoCloseable {
 			}
 		}
 	}
-	
+
 	private void insertArchive() throws Exception {
 		boolean inserted = true;
 		for (int j = 0; j < archive_log_dir.length; j++) {
@@ -130,21 +128,20 @@ public class DBConstructor implements AutoCloseable {
 							inserted = true;
 							// AgentState
 							if (tableName.equalsIgnoreCase("AgentState")) {
-								//insert(stream, tableName, true);
+								// insert(stream, tableName, true);
 								insertAgentState(stream, tableName, true);
 							}
 							// Job
 							else if (tableName.equalsIgnoreCase("Job")) {
 								insert(stream, tableName, true);
-							}
-							else {
+							} else {
 								inserted = false;
 							}
 
 							long after = System.currentTimeMillis();
-							if(inserted)
+							if (inserted)
 								out.println(tableName + ": " + (after - before) + "ms");
-							else 
+							else
 								out.println("Skipped " + entry.getName());
 						}
 					}
@@ -152,7 +149,7 @@ public class DBConstructor implements AutoCloseable {
 			}
 		}
 	}
-	
+
 	private void insertLog() throws Exception {
 		File directory = new File(Constants.LOG_DIR);
 		if (directory.exists() && directory.isDirectory()) {
@@ -196,7 +193,7 @@ public class DBConstructor implements AutoCloseable {
 				}
 
 				long after = System.currentTimeMillis();
-				
+
 				out.println(tableName + ": " + (after - before) + "ms");
 
 			}
@@ -208,7 +205,7 @@ public class DBConstructor implements AutoCloseable {
 		insertArchive();
 		insertLog();
 	}
-	
+
 	private void insertAgentState(InputStream inputStream, String tableName, boolean skip)
 			throws Exception {
 		LineNumberReader lineReader = new LineNumberReader(
@@ -216,7 +213,7 @@ public class DBConstructor implements AutoCloseable {
 		if (lineReader.markSupported()) {
 			lineReader.mark(Constants.MAX_HEADER_SIZE);
 		}
-		
+
 		SchemaMap typeTable = getSchema(tableName);
 		if (typeTable == null)
 			throw new Exception("No table exists: " + tableName);
@@ -224,16 +221,17 @@ public class DBConstructor implements AutoCloseable {
 		do {
 			month = insertAgentState(month, typeTable, lineReader, tableName, skip);
 		} while (month != null);
-		
+
 	}
-	
-	private LocalDateTime insertAgentState(LocalDateTime month, SchemaMap typeTable, LineNumberReader lineReader, String tableName, boolean skip)
+
+	private LocalDateTime insertAgentState(LocalDateTime month, SchemaMap typeTable, LineNumberReader lineReader,
+			String tableName, boolean skip)
 			throws Exception {
 		boolean differentMonth = false;
 		String sql = "INSERT INTO public.\"" + tableName + "\" ";
-		if(month!=null) {
+		if (month != null) {
 			// AgentState_y2018m04
-			sql  ="INSERT INTO public.\"" + tableName + "_y" + month.getYear() + "m" + month.toString("MM") + "\" ";
+			sql = "INSERT INTO public.\"" + tableName + "_y" + month.getYear() + "m" + month.toString("MM") + "\" ";
 		}
 		StringBuilder fieldNameBuilder = new StringBuilder("(");
 		StringBuilder valueStringBuilder = new StringBuilder(" VALUES (");
@@ -351,10 +349,10 @@ public class DBConstructor implements AutoCloseable {
 					else {
 						insertQuery.setObject(parameterIndex, java.time.LocalDateTime.parse(fields[j]));
 						// Optimization code
-						if(columns[j].equals("simulationTime")) {
+						if (columns[j].equals("simulationTime")) {
 							// table
 							LocalDateTime date = LocalDateTime.parse(fields[j]);
-							if(month == null || date.getMonthOfYear() != month.getMonthOfYear()) {
+							if (month == null || date.getMonthOfYear() != month.getMonthOfYear()) {
 								// cancel inserting query
 								differentMonth = true;
 								// reader recover
@@ -382,7 +380,7 @@ public class DBConstructor implements AutoCloseable {
 					throw new Exception("Cannot handle " + schema.type
 							+ "type.");
 			}
-			if(differentMonth)
+			if (differentMonth)
 				break;
 
 			insertQuery.addBatch();
@@ -394,7 +392,7 @@ public class DBConstructor implements AutoCloseable {
 		insertQuery.executeBatch();
 		if (!connection.getAutoCommit())
 			connection.commit();
-		if(!differentMonth)
+		if (!differentMonth)
 			return null;
 		return month;
 	}
@@ -616,8 +614,9 @@ public class DBConstructor implements AutoCloseable {
 						|| trimmedLine.startsWith("--")) {
 					// Do nothing
 				} else if (!fullLineDelimiter
-						&& trimmedLine.endsWith(delimiter) || fullLineDelimiter
-						&& trimmedLine.equals(delimiter)) {
+						&& trimmedLine.endsWith(delimiter)
+						|| fullLineDelimiter
+								&& trimmedLine.equals(delimiter)) {
 					command.append(line.substring(0,
 							line.lastIndexOf(delimiter)));
 					command.append(" ");
@@ -692,12 +691,13 @@ public class DBConstructor implements AutoCloseable {
 
 		}
 	}
-	
+
 	public static void printUsage() {
 		System.out.println("Usage: use one of the following argements\n" +
 				"\tcreate_schema\tCreate all tables. Note that this will remove all existing tables in the DB.\n" +
 				"\tcreate_index\tCreate index.\n" +
-				"\tinsert_all\tInsert all log (.tsv) files including archive files described in database.properties file.\n" +
+				"\tinsert_all\tInsert all log (.tsv) files including archive files described in database.properties file.\n"
+				+
 				"\tinsert_tsv\tInsert tsv files only.\n" +
 				"\tinsert_archives\tInsert archive files only.");
 	}
@@ -736,10 +736,9 @@ public class DBConstructor implements AutoCloseable {
 			} else {
 				isComplete = false;
 			}
-			
 
 			db.close();
-			if(isComplete)
+			if (isComplete)
 				System.out.println("Complete!");
 			else
 				printUsage();
