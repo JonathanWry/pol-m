@@ -1412,7 +1412,8 @@ public class WorldModel extends SimState {
 	/**
 	 * Returns usable buildings.
 	 * 
-	 * @param neighboodId
+	 * @param
+	 *
 	 * @return
 	 */
 	public List<Building> getUsableBuildings(BuildingType type) {
@@ -1805,12 +1806,19 @@ public class WorldModel extends SimState {
 		doLoop(new MakesSimState() {
 			public SimState newInstance(long seed, String[] args) {
 				try {
+
 					String configurationPath = argumentForKey("-configuration",
 							args);
+
+					configurationPath="/home/emo/Downloads/pol-m/modified.properties";
+
 					WorldParameters params = new WorldParameters();
+
 					if (configurationPath != null) {
 						params = new WorldParameters(configurationPath);
 					}
+					System.out.println("params: "+params.maps);
+
 					return (SimState) (c.getConstructor(new Class[] {
 							Long.TYPE, WorldParameters.class }).newInstance(new Object[] {
 							Long.valueOf(params.seed), params }));
@@ -1833,11 +1841,11 @@ public class WorldModel extends SimState {
 //		modifiedArgs[args.length] = "-until";
 //		modifiedArgs[args.length + 1] = "8060";
 //		doLoop(WorldModel.class, modifiedArgs);
-		String[] modifiedArgs = new String[args.length + 1];
-		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
-		modifiedArgs[args.length] = "--add-opens=java.base/java.util=ALL-UNNAMED";
-		doLoop(WorldModel.class, modifiedArgs);
-//		doLoop(WorldModel.class, args);
+//		String[] modifiedArgs = new String[args.length + 1];
+//		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
+//		modifiedArgs[args.length] = "--add-opens=java.base/java.util=ALL-UNNAMED";
+//		doLoop(WorldModel.class, modifiedArgs);
+		doLoop(WorldModel.class, args);
 		System.exit(0);
 	}
 
