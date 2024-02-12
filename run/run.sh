@@ -1,1 +1,15 @@
-java -Dlog4j2.configurationFactory=edu.gmu.mason.vanilla.log.CustomConfigurationFactory -Dlog.rootDirectory=logs -Dsimulation.test=c01 -jar ../target/vanilla-0.1-jar-with-dependencies.jar -configuration modified.properties -until 25920
+# ask for confirmation to run mvn.sh
+read -p "Do you want to recompile the source code? (y/n)" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Running mvn.sh"
+    cd ..
+    sh mvn.sh
+    cd run
+else
+    echo "runing the previous version of the code..."
+fi
+
+cd experiment
+sh run.sh
+cd ..
