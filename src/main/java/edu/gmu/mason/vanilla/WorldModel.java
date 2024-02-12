@@ -59,7 +59,7 @@ public class WorldModel extends SimState {
 
 	// java utils
 	private final static ExtLogger logger = ExtLogger.create(WorldModel.class);
-	
+
 	// predefined ordering for MASON schedule
 	public static final int STEP_BEGIN_PRIORITY = Integer.MIN_VALUE + 10;
 	public static final int INTERVENTION_PRIORITY = Integer.MIN_VALUE + 20;
@@ -102,7 +102,7 @@ public class WorldModel extends SimState {
 
 	// data collection variable used to capture quantities of interests
 	private QuantitiesOfInterest quantitiesOfInterest;
-	
+
 	// All reserved logging matter
 	private ReservedLogChannels reservedLog;
 
@@ -125,10 +125,10 @@ public class WorldModel extends SimState {
 	private Object[][] latestBarStatsData = { { 1, Color.BLACK, Color.BLACK,
 			Color.BLACK, 0.00, 0.0, 0 } };
 
-	private Random rand=new Random();
+	private Random rand = new Random();
 	private BuildingUnit diseaseSource;
-	private Sourcing sourcing=new Sourcing();
-	public boolean traced=false;
+	private Sourcing sourcing = new Sourcing();
+	public boolean traced = false;
 
 	public WorldModel(long seed, WorldParameters params) throws IOException,
 			Exception {
@@ -147,7 +147,6 @@ public class WorldModel extends SimState {
 		reservedLog = new ReservedLogChannels(this);
 		startDataCollectionForQoIs();
 	}
-
 
 	/**
 	 * Start method that creates and initializes agents and objects
@@ -169,7 +168,8 @@ public class WorldModel extends SimState {
 				"Agent population create/initialize time");
 		// Ensure that the spatial index is made aware of the new agent
 		// positions. Scheduled to guaranteed to run after all agents moved.
-		// let's put all schedules here so that we can easily track them and order by priority
+		// let's put all schedules here so that we can easily track them and order by
+		// priority
 		// lower priority first
 		schedule.scheduleRepeating(logScheduler, LOGGING_PRIORITY, 1);
 		schedule.scheduleRepeating(agentLayer.scheduleSpatialIndexUpdater(), SPATIAL_INDEX_UPDATING_PRIORITY, 1);
@@ -190,7 +190,7 @@ public class WorldModel extends SimState {
 		manipulate(ManipulationLoader.loadFromConfig(params.initialManipulationFilePath));
 		reservedLog.loggingSetup();
 		reservedLog.loggingSchedule();
-	} 
+	}
 
 	@Override
 	public void awakeFromCheckpoint() {
@@ -200,93 +200,103 @@ public class WorldModel extends SimState {
 				.loadFromConfig(params.additionalManipulationFilePath));
 	}
 
-	public void traceBack(){
-		System.out.println(diseaseSource.getId()+"=========");
+	public void traceBack() {
+		System.out.println(diseaseSource.getId() + "=========");
 		sourcing.setTotalAgent(agents.size());
-		for(Person agent:agents.values()){
+		for (Person agent : agents.values()) {
 			sourcing.appendAgentInfo(agent);
 		}
 		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
 				+ params.numRestaurantsPer1000;
-		// TODO: fix this part and add remote.lock file in folder run then push to GitHub.
-		// make sure to remove the remote.lock file after you could see the results on target folder.
+		// TODO: fix this part and add remote.lock file in folder run then push to
+		// GitHub.
+		// make sure to remove the remote.lock file after you could see the results on
+		// target folder.
 		// ratio1, ratio2, ratio3 are the weigth that is x+y+z=1
 		String fileContent = "sourceId, foundPos,foundPosId, placeRank, placeRatio, ratio1, ratio2, ratio3, params\n";
 		String line = "";
-		int counter=0;
-		double portion = 0.05;
+		int counter = 0;
+		double portion = 0.01;
 		for (double i = 0.0; i <= 1.0; i += portion) {
-			for (double j = 0.0; j <= 1.0 - i; j += portion) {
-				double k = 1.0 - i - j;
-				if (k >= 0.0 && k <= 1.0) {
+			for (double j = 0.0; j <= 1.0; j += portion) {
+				for (double k = 0.0; k <= 1.0; k += portion) {
+					if (i + j + k >= 1.0 + portion || i + j + k <= 1.0 - portion) {
+						continue;
+					}
 					counter++;
-					double ratioSet[] = {i, j, k};
+					double ratioSet[] = { i, j, k };
 					double ratio1 = ratioSet[0];
 					double ratio2 = ratioSet[1];
 					double ratio3 = ratioSet[2];
 					sourcing.sort(ratio1, ratio2, ratio3);
-//							sourcing.show(diseaseSource.getId());
+					// sourcing.show(diseaseSource.getId());
 					long sourceId = diseaseSource.getId();
-					//TODO: Is foundPos the top ranked id?
+					// TODO: Is foundPos the top ranked id?
 					double foundPos = sourcing.topRate();
 					long foundPosId = sourcing.topId();
 					double[] res = (sourcing.findPos(sourceId));
 					int placeRank = (int) res[0];
 					double placeRatio = res[1];
-					line = sourcing.getString(sourceId, foundPos, foundPosId, placeRank, placeRatio, ratio1, ratio2, ratio3, params);
+					line = sourcing.getString(sourceId, foundPos, foundPosId, placeRank, placeRatio, ratio1, ratio2,
+							ratio3, params);
 					fileContent += line;
-					}
-
 				}
+
 			}
+		}
 
 		System.out.println(fileContent);
 		sourcing.writeToFile(fileContent, "sourcing.csv");
-		System.out.println("Number of ratios: "+ counter);
+		System.out.println("Number of ratios: " + counter);
 		System.exit(0);
 	}
+
 	@Override
 	public void finish() {
-		System.out.println(diseaseSource.getId()+"=========");
+		System.out.println(diseaseSource.getId() + "=========");
 		sourcing.setTotalAgent(agents.size());
-		for(Person agent:agents.values()){
-//			if(agent.getInfected()){
-//				System.out.println("AgentId"+agent.getAgentId()+" track:"+agent.getTrack().size());
-//				ArrayList<DailyTrack> track = agent.getTrack();
-//				for(int i=0;i<track.size();i++){
-//					DailyTrack dailyTrack=track.get(i);
-//					System.out.println("Date:"+dailyTrack.getDate()+" Locations:"+dailyTrack.getDayTrack().toString());
-//				}
-//			}
+		for (Person agent : agents.values()) {
+			// if(agent.getInfected()){
+			// System.out.println("AgentId"+agent.getAgentId()+"
+			// track:"+agent.getTrack().size());
+			// ArrayList<DailyTrack> track = agent.getTrack();
+			// for(int i=0;i<track.size();i++){
+			// DailyTrack dailyTrack=track.get(i);
+			// System.out.println("Date:"+dailyTrack.getDate()+"
+			// Locations:"+dailyTrack.getDayTrack().toString());
+			// }
+			// }
 			sourcing.appendAgentInfo(agent);
 		}
-//		double[] best=new double[]{Integer.MAX_VALUE,0};
-//		double[] cur;
-//		double[] bestParam=new double[3];
-//		for(float i=0;i<1;i+=0.1){
-//			for(float j=0;j+i<1;j+=0.1){
-//				sourcing.sort(i,j,1-i-j);
-//				cur=sourcing.findPos(diseaseSource.getId());
-//				if(cur[1]>best[1]){
-//					best=cur;
-//					bestParam=new double[]{i,j,1-i-j};
-//				}else if (cur[1]==best[1]&&cur[0]<best[0]){
-//					best=cur;
-//					bestParam=new double[]{i,j,1-i-j};
-//				}
-//			}
-//		}
-//		System.out.println(bestParam[0]+" "+bestParam[1]+" "+bestParam[2]+" ");
-//		System.out.println(best[0]+"|"+best[1]);
-//		double sum = params.numOfAgents + params.numberOfNearestPubs + params.numWorkplacesPer1000
-//				+ params.numRestaurantsPer1000;
-//
-//		double ratio1 = params.numOfAgents / sum ;
-//		double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000 )/sum;
-//		double ratio3 =  params.numRestaurantsPer1000/sum;
-////		sourcing.sort(0.8,0.1,0.1);
-//		sourcing.sort(ratio1, ratio2, ratio3);
-//		sourcing.show(diseaseSource.getId());
+		// double[] best=new double[]{Integer.MAX_VALUE,0};
+		// double[] cur;
+		// double[] bestParam=new double[3];
+		// for(float i=0;i<1;i+=0.1){
+		// for(float j=0;j+i<1;j+=0.1){
+		// sourcing.sort(i,j,1-i-j);
+		// cur=sourcing.findPos(diseaseSource.getId());
+		// if(cur[1]>best[1]){
+		// best=cur;
+		// bestParam=new double[]{i,j,1-i-j};
+		// }else if (cur[1]==best[1]&&cur[0]<best[0]){
+		// best=cur;
+		// bestParam=new double[]{i,j,1-i-j};
+		// }
+		// }
+		// }
+		// System.out.println(bestParam[0]+" "+bestParam[1]+" "+bestParam[2]+" ");
+		// System.out.println(best[0]+"|"+best[1]);
+		// double sum = params.numOfAgents + params.numberOfNearestPubs +
+		// params.numWorkplacesPer1000
+		// + params.numRestaurantsPer1000;
+		//
+		// double ratio1 = params.numOfAgents / sum ;
+		// double ratio2 = (params.numberOfNearestPubs + params.numWorkplacesPer1000
+		// )/sum;
+		// double ratio3 = params.numRestaurantsPer1000/sum;
+		//// sourcing.sort(0.8,0.1,0.1);
+		// sourcing.sort(ratio1, ratio2, ratio3);
+		// sourcing.show(diseaseSource.getId());
 		super.finish();
 		try {
 			if (visualFriendFamilyGraph != null && visualWorkGraph != null) {
@@ -319,7 +329,6 @@ public class WorldModel extends SimState {
 		this.jobs = new TreeMap<Long, Job>();
 		this.restaurants = new TreeMap<Long, Restaurant>();
 		this.pubs = new TreeMap<Long, Pub>();
-
 
 		// db.Buildings = buildings;
 
@@ -358,11 +367,12 @@ public class WorldModel extends SimState {
 			neighbors.add(place);
 		}
 		// END NEIGHBORHOOD IDENTIFICATION
-		logger.info("Number of neighborhoods: "+ neighborhoodBuildingMap.size());
+		logger.info("Number of neighborhoods: " + neighborhoodBuildingMap.size());
 
 		// INITIALIZE THE ENVIROMENT NEIGHBORHOOD BY NEIGHBORHOOD AND CREATE
 		// UNITS
-		Map<Integer,Integer> numOfAgentsPerNeighborhood = numberOfAgentsPerNeighborhood(this.neighborhoodBuildingMap, params.numOfAgents);
+		Map<Integer, Integer> numOfAgentsPerNeighborhood = numberOfAgentsPerNeighborhood(this.neighborhoodBuildingMap,
+				params.numOfAgents);
 		int nIndex = 0;
 
 		NeighborhoodComposition neighborhoodComposition;
@@ -374,19 +384,18 @@ public class WorldModel extends SimState {
 			int numberOfNeighborhoodBuildings = neighborhoodBuildings.size();
 
 			// calculate attractiveness percentile of each building per neighborhood
- 			double[] attractivenessValues = new double[numberOfNeighborhoodBuildings];
- 			for(int i=0;i<attractivenessValues.length; i++) {
- 				attractivenessValues[i] = neighborhoodBuildings.get(i).getAttractiveness();
- 			}
- 			EmpiricalDistribution distribution = new EmpiricalDistribution(attractivenessValues.length);
- 		    distribution.load(attractivenessValues);
+			double[] attractivenessValues = new double[numberOfNeighborhoodBuildings];
+			for (int i = 0; i < attractivenessValues.length; i++) {
+				attractivenessValues[i] = neighborhoodBuildings.get(i).getAttractiveness();
+			}
+			EmpiricalDistribution distribution = new EmpiricalDistribution(attractivenessValues.length);
+			distribution.load(attractivenessValues);
 
-  		    for (Building bld: neighborhoodBuildings) {
- 		    	double percentile = distribution.cumulativeProbability(bld.getAttractiveness());
- 		    	bld.setAttractivenessPercentile(percentile);
- 		    }
+			for (Building bld : neighborhoodBuildings) {
+				double percentile = distribution.cumulativeProbability(bld.getAttractiveness());
+				bld.setAttractivenessPercentile(percentile);
+			}
 
-			
 			// number of units and random number generators are set.
 			neighborhoodComposition = new NeighborhoodComposition(random, params);
 			neighborhoodComposition.calculate(numOfAgentsPerNeighborhood.get(nId));
@@ -465,7 +474,7 @@ public class WorldModel extends SimState {
 								BuildingType.Residental);
 
 				Building bld = buildings.get(selectedBuildingId);
-				
+
 				Apartment apartment = new Apartment(unitId++, bld);
 				int rooms = neighborhoodComposition.generateNumberOfRoomsForApartments();
 				apartment.setAttractiveness(neighborhoodComposition
@@ -473,12 +482,13 @@ public class WorldModel extends SimState {
 				apartment.setNumberOfRooms(neighborhoodComposition
 						.generateNumberOfRoomsForApartments());
 				apartment.setPersonCapacity(rooms);
-				
-				// based on the attractiveness/degree percentile, rent can be as twice as the regular value
+
+				// based on the attractiveness/degree percentile, rent can be as twice as the
+				// regular value
 				double rent = neighborhoodComposition.generateApartmentRentalPrice(rooms);
-				rent *= (1+bld.getAttractivenessPercentile()); 
+				rent *= (1 + bld.getAttractivenessPercentile());
 				apartment.setRentalCost(rent);
-				
+
 				apartment.setBlockId(bld.getBlockId());
 				apartment.setBlockGroupId(bld.getBlockGroupId());
 				apartment.setCensusTractId(bld.getCensusTractId());
@@ -602,14 +612,15 @@ public class WorldModel extends SimState {
 		Random generator = new Random();
 		Object[] values = restaurants.values().toArray();
 		diseaseSource = (BuildingUnit) values[generator.nextInt(values.length)];
-		System.out.println("DISEASE SOURCE IS!!!! "+diseaseSource.getId());
+		System.out.println("DISEASE SOURCE IS!!!! " + diseaseSource.getId());
 	}
 
 	private void initVisualGraph() {
 		// change graph directory
-		String friendFamilyPath = ReservedLogChannels.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + friendFamilyGraphSinkPath);
+		String friendFamilyPath = ReservedLogChannels
+				.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + friendFamilyGraphSinkPath);
 		String workPath = ReservedLogChannels.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + workGraphSinkPath);
-		
+
 		URL url = WorldModel.class
 				.getResource("/stylesheet/NodeColoringBasedOnInterest.css");
 		String css = "url(" + url.toString() + ")";
@@ -642,12 +653,11 @@ public class WorldModel extends SimState {
 		}
 	}
 
-	
-
 	private void reloadVisualGraph() {
-		String friendFamilyPath = ReservedLogChannels.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + friendFamilyGraphSinkPath);
+		String friendFamilyPath = ReservedLogChannels
+				.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + friendFamilyGraphSinkPath);
 		String workPath = ReservedLogChannels.fullDirectory(ReservedLogChannels.DEFAULT_DIRECTORY + workGraphSinkPath);
-		
+
 		URL url = WorldModel.class
 				.getResource("/stylesheet/NodeColoringBasedOnInterest.css");
 		String css = "url(" + url.toString() + ")";
@@ -725,13 +735,13 @@ public class WorldModel extends SimState {
 
 	// ID sequence used for new pubs
 	long unitId = 0;
-	
+
 	public void openNewPub(Double building) {
-		// new id starts from  
-		if(unitId == 0)
+		// new id starts from
+		if (unitId == 0)
 			unitId = 20000;
 		Building bld = getBuilding(building.longValue());
-		if(bld == null)
+		if (bld == null)
 			return;
 		NeighborhoodComposition neighborhoodComposition = new NeighborhoodComposition(random, params);
 		Pub pub = new Pub(unitId++, bld);
@@ -745,13 +755,13 @@ public class WorldModel extends SimState {
 
 		bld.addUnit(pub);
 		pubs.put(pub.getId(), pub);
-		
+
 		List<MasonGeometry> units = spatialNetwork.getBuildingUnitTable().get((int) bld.getId());
 		pub.setLocation(units.get(bld.getUnits().size() % units.size()));
-		
+
 		updateNearestPubCache();
 	}
-	
+
 	public void updateNearestPubCache() {
 		// update nearest pubs cache
 		List<BuildingUnit> places = new ArrayList<BuildingUnit>();
@@ -759,11 +769,11 @@ public class WorldModel extends SimState {
 		places.addAll(workplaces.values());
 		places.addAll(restaurants.values());
 		places.addAll(pubs.values());
-		for(BuildingUnit unit: places ) {
+		for (BuildingUnit unit : places) {
 			unit.resetNearestPubDistanceMap();
 		}
 	}
-	
+
 	public void updateNearestRestaurantCache() {
 		// update nearest restaurants cache
 		List<BuildingUnit> places = new ArrayList<BuildingUnit>();
@@ -771,14 +781,14 @@ public class WorldModel extends SimState {
 		places.addAll(workplaces.values());
 		places.addAll(restaurants.values());
 		places.addAll(pubs.values());
-		for(BuildingUnit unit: places ) {
+		for (BuildingUnit unit : places) {
 			unit.resetNearestRestaurantDistanceMap();
 		}
 	}
-	
+
 	public void openNewPubs(Double numberOfNewPubs) {
-		// new id starts from  
-		if(unitId == 0)
+		// new id starts from
+		if (unitId == 0)
 			unitId = 20000;
 		// distribute pub units in commercial buildings
 		for (int i = 0; i < numberOfNewPubs; i++) {
@@ -804,13 +814,13 @@ public class WorldModel extends SimState {
 
 			bld.addUnit(pub);
 			pubs.put(pub.getId(), pub);
-			
+
 			List<MasonGeometry> units = spatialNetwork.getBuildingUnitTable().get((int) bld.getId());
 			pub.setLocation(units.get(bld.getUnits().size() % units.size()));
 		}
 		updateNearestPubCache();
 	}
-	
+
 	public void manipulate(List<Manipulation> events) {
 		if (events != null)
 			manipulationScheduler.add(events);
@@ -885,15 +895,15 @@ public class WorldModel extends SimState {
 
 	private void addHumanAgents() {
 		agents = new TreeMap<Long, Person>();
-		
+
 		// add approx equal number of agents for each neighborhood.
-		Map<Integer,Integer> numOfAgentsPerNeighborhood = numberOfAgentsPerNeighborhood(this.neighborhoodBuildingMap, params.numOfAgents);
+		Map<Integer, Integer> numOfAgentsPerNeighborhood = numberOfAgentsPerNeighborhood(this.neighborhoodBuildingMap,
+				params.numOfAgents);
 		int nIndex = 0;
-		logger.info("Total number of agents: "+params.numOfAgents);
-		
+		logger.info("Total number of agents: " + params.numOfAgents);
 
 		for (int nId : this.neighborhoodBuildingMap.keySet()) {
-			System.out.println("Number of agents in neighborhood #" + nId+ ": "+numOfAgentsPerNeighborhood.get(nId));
+			System.out.println("Number of agents in neighborhood #" + nId + ": " + numOfAgentsPerNeighborhood.get(nId));
 
 			NeighborhoodComposition neighborhoodComposition = new NeighborhoodComposition(random, params);
 			neighborhoodComposition.calculate(numOfAgentsPerNeighborhood.get(nId));
@@ -916,7 +926,7 @@ public class WorldModel extends SimState {
 				addAgent(agentId++, nId, false, false, 1);
 			}
 		}
-		//spatialNetwork.clearPrecomputedPaths();
+		// spatialNetwork.clearPrecomputedPaths();
 		logger.info("Human agents are added.");
 	}
 
@@ -970,28 +980,31 @@ public class WorldModel extends SimState {
 		agent.setStoppable(stp);
 		logger.info("Agent #" + agentId + " added.");
 	}
-	
+
 	/**
 	 * Returns an array that keeps number of agents per neighborhood.
+	 * 
 	 * @param neighborhoodBuildingMap
 	 * @param numOfAgents
 	 * @return
 	 */
-	public Map<Integer,Integer> numberOfAgentsPerNeighborhood(Map<Integer, List<Building>> neighborhoodBuildingMap, int numOfAgents) {
-		Map<Integer,Integer> numberOfAgentsPerNeighborhood = new TreeMap<Integer,Integer>();
-		int apprxNumber = (int)((double)numOfAgents / (double)neighborhoodBuildingMap.size());
+	public Map<Integer, Integer> numberOfAgentsPerNeighborhood(Map<Integer, List<Building>> neighborhoodBuildingMap,
+			int numOfAgents) {
+		Map<Integer, Integer> numberOfAgentsPerNeighborhood = new TreeMap<Integer, Integer>();
+		int apprxNumber = (int) ((double) numOfAgents / (double) neighborhoodBuildingMap.size());
 		int[] nids = new int[neighborhoodBuildingMap.size()];
-		
+
 		int j = 0;
 		for (Integer id : neighborhoodBuildingMap.keySet()) {
 			nids[j++] = id;
 		}
-		
-		for(int i=0; i < nids.length-1; i++) {
+
+		for (int i = 0; i < nids.length - 1; i++) {
 			numberOfAgentsPerNeighborhood.put(nids[i], apprxNumber);
 		}
-		numberOfAgentsPerNeighborhood.put(nids[nids.length-1], numOfAgents - (neighborhoodBuildingMap.size()-1) * apprxNumber);
-		
+		numberOfAgentsPerNeighborhood.put(nids[nids.length - 1],
+				numOfAgents - (neighborhoodBuildingMap.size() - 1) * apprxNumber);
+
 		return numberOfAgentsPerNeighborhood;
 	}
 
@@ -1075,7 +1088,7 @@ public class WorldModel extends SimState {
 	}
 
 	public void nightlyRoutine() {
-		
+
 		// update day display on the screen
 		day = day + 1;
 		logger.info("Night routine:" + getFormattedDateTime());
@@ -1119,7 +1132,6 @@ public class WorldModel extends SimState {
 						.getVisitorProfile().getAverageIncome(), 2);
 				latestBarStatsData[i][++j] = pub.getVisitorProfile().getTotal();
 
-
 			} else {
 				latestBarStatsData[i][0] = pub.getId();
 				;
@@ -1133,17 +1145,17 @@ public class WorldModel extends SimState {
 
 			latestBarStatsData[i][7] = pub.isUsable();
 		}
-		
+
 		loggingVisitorProfile();
 
-		Edge[][] matrix = friendFamilyNetwork.getAdjacencyList(true);		
+		Edge[][] matrix = friendFamilyNetwork.getAdjacencyList(true);
 		List<Edge> linksToDelete = new ArrayList<Edge>();
-		
+
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[i].length; j++) {
 				double newWeight = (double) matrix[i][j].getInfo() * params.networkEdgeDecayFactor;
 				friendFamilyNetwork.updateEdge(matrix[i][j], matrix[i][j].from(), matrix[i][j].to(), newWeight);
-				
+
 				if (newWeight < params.networkEdgeDeletionThreshold) {
 					linksToDelete.add(matrix[i][j]);
 				}
@@ -1162,35 +1174,36 @@ public class WorldModel extends SimState {
 				ex.printStackTrace();
 			}
 		}
-		//clear the memory
+		// clear the memory
 		matrix = null;
 		linksToDelete.clear();
 
 		// agents' nightly routines
 		double y = params.initialNetworkEdgeWeight;
-		int steps = params.stableRelationshipPeriodInMin / getMinutePerStep(); 
+		int steps = params.stableRelationshipPeriodInMin / getMinutePerStep();
 		for (int i = 0; i < steps; i++) {
 			y += params.networkEdgeWeightStrengtheningRate * (1 - y / WorldParameters.NETWORK_WEIGHT_UPPER_BOUND);
 			y = Math.min(y, WorldParameters.NETWORK_WEIGHT_UPPER_BOUND);
 		}
-		double expectedHealthyRelationshipWeight = Math.max(params.networkEdgeDeletionThreshold, Math.pow(params.networkEdgeDecayFactor, params.maxLonelyDays) * y);
+		double expectedHealthyRelationshipWeight = Math.max(params.networkEdgeDeletionThreshold,
+				Math.pow(params.networkEdgeDecayFactor, params.maxLonelyDays) * y);
 		// let's make sure we first update the financial safety needs of agents
 		for (Person person : this.agents.values()) {
 			person.writeAttributesToFile();
 			person.getFinancialSafetyNeed().update(); // update financial status
 			person.getFoodNeed().resetNumberOfMealsTaken();
-			
+
 			Bag outEdges = friendFamilyNetwork.getEdgesOut(person.getAgentId());
-			
+
 			// calculate social happiness as the average of friendship weight
 			double happiness = 0;
 			if (outEdges.size() > 0) {
-				for(Object edgeObj: outEdges) {
+				for (Object edgeObj : outEdges) {
 					Edge edge = (Edge) edgeObj;
 					double weight = (double) edge.getInfo();
 					happiness += weight;
 				}
-				// ratio of summed relationship weights over expectation 
+				// ratio of summed relationship weights over expectation
 				happiness /= params.maxNumOfFriends * expectedHealthyRelationshipWeight;
 			}
 			happiness -= params.networkEdgeDeletionThreshold;
@@ -1217,20 +1230,20 @@ public class WorldModel extends SimState {
 	// ROUTINES/PERIODIC METHODS END
 
 	// PLACE SEARCH METHODS
-	
+
 	public List<Restaurant> getNearestRestaurants(MasonGeometry geom, int numberOfRestaurants) {
 		List<Restaurant> restaurants = getUsableRestaurants();
 
-		if (restaurants == null){
+		if (restaurants == null) {
 			return null;
 		}
-		
+
 		restaurants.sort(new Comparator<BuildingUnit>() {
 			@Override
 			public int compare(BuildingUnit o1, BuildingUnit o2) {
 				double a = spatialNetwork.getDistance(geom, o1.getLocation());
 				double b = spatialNetwork.getDistance(geom, o2.getLocation());
-				if(a == b)
+				if (a == b)
 					return Long.compare(o1.getId(), o2.getId());
 				return Double.compare(a, b);
 			}
@@ -1242,20 +1255,20 @@ public class WorldModel extends SimState {
 	public Restaurant getRestaurant(long id) {
 		return restaurants.get(id);
 	}
-	
+
 	public List<Pub> getNearestPubs(MasonGeometry geom, int numberOfPubs) {
 		List<Pub> pubs = getUsablePubs();
-		
+
 		if (pubs == null) {
 			return null;
 		}
-		
+
 		pubs.sort(new Comparator<Pub>() {
 			@Override
 			public int compare(Pub o1, Pub o2) {
 				double a = spatialNetwork.getDistance(geom, o1.getLocation());
 				double b = spatialNetwork.getDistance(geom, o2.getLocation());
-				if(a == b)
+				if (a == b)
 					return Long.compare(o1.getId(), o2.getId());
 				return Double.compare(a, b);
 			}
@@ -1263,8 +1276,8 @@ public class WorldModel extends SimState {
 		return pubs.size() > numberOfPubs ? pubs.subList(0, numberOfPubs)
 				: pubs;
 	}
-	
-	public Pub getPub(long id){
+
+	public Pub getPub(long id) {
 		return pubs.get(id);
 	}
 
@@ -1315,14 +1328,14 @@ public class WorldModel extends SimState {
 		int totalTimePassed = stepSize * params.oneStepTime;
 
 		switch (params.timeStepUnit) {
-		case MinutePerStep:
-			return params.initialSimulationTime.plusMinutes(totalTimePassed);
-		case SecondPerStep:
-			return params.initialSimulationTime.plusSeconds(totalTimePassed);
-		case HourPerStep:
-			return params.initialSimulationTime.plusHours(totalTimePassed);
-		case DayPerStep:
-			return params.initialSimulationTime.plusDays(totalTimePassed);
+			case MinutePerStep:
+				return params.initialSimulationTime.plusMinutes(totalTimePassed);
+			case SecondPerStep:
+				return params.initialSimulationTime.plusSeconds(totalTimePassed);
+			case HourPerStep:
+				return params.initialSimulationTime.plusHours(totalTimePassed);
+			case DayPerStep:
+				return params.initialSimulationTime.plusDays(totalTimePassed);
 		}
 
 		return new LocalDateTime();
@@ -1379,7 +1392,8 @@ public class WorldModel extends SimState {
 				.values()
 				.stream()
 				.filter(p -> p.getNeighborhoodId() == neighboodId
-						&& p.isUsable() == true).collect(Collectors.toList());
+						&& p.isUsable() == true)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -1413,9 +1427,10 @@ public class WorldModel extends SimState {
 						&& p.getBuildingType().equals(type))
 				.collect(Collectors.toList());
 	}
-	
+
 	/**
 	 * Returns all workplaces.
+	 * 
 	 * @return
 	 */
 	public List<Workplace> getAllWorkplaces() {
@@ -1441,8 +1456,6 @@ public class WorldModel extends SimState {
 				.collect(Collectors.toList());
 	}
 
-	
-	
 	/**
 	 * Returns usable apartments.
 	 * 
@@ -1533,7 +1546,6 @@ public class WorldModel extends SimState {
 		return restaurants.values().stream().filter(p -> p.isUsable() == true)
 				.collect(Collectors.toList());
 	}
-	
 
 	/**
 	 * Returns all the agents.
@@ -1543,9 +1555,10 @@ public class WorldModel extends SimState {
 	public List<Person> getAgents() {
 		return this.agents.values().stream().collect(Collectors.toList());
 	}
-	
+
 	public List<Person> getAgentsCheckin() {
-		return this.agents.values().stream().filter(p -> p.getCurrentUnit() != null && p.getVisitReason() != VisitReason.None)
+		return this.agents.values().stream()
+				.filter(p -> p.getCurrentUnit() != null && p.getVisitReason() != VisitReason.None)
 				.collect(Collectors.toList());
 	}
 
@@ -1562,7 +1575,7 @@ public class WorldModel extends SimState {
 	 * Return an agent by its id.
 	 * 
 	 * @param id
-	 *            agent id
+	 *           agent id
 	 * @return
 	 */
 	public Person getAgent(Long id) {
@@ -1722,13 +1735,13 @@ public class WorldModel extends SimState {
 							QuantitiesOfInterest.NUM_OF_SOCIAL_INTERACTIONS,
 							(double) agentInteractions.size(),
 							schedule.getSteps());
-					quantitiesOfInterest.numOfSocialInteractions =  agentInteractions.size();
+					quantitiesOfInterest.numOfSocialInteractions = agentInteractions.size();
 					agentInteractions.clear();
 				}
-				
+
 				// For the sake of performance, return 1.0.
 				return 1.0;
-				// You can return a value you are interested. 
+				// You can return a value you are interested.
 				// For instance, if you want to monitor average balance, use the following code.
 				// return (double) quantitiesOfInterest.avgBalance;
 			}
@@ -1742,29 +1755,30 @@ public class WorldModel extends SimState {
 			}
 		});
 	}
-	
+
 	@Skip
 	private EventJournalSettings journalSetting;
-	
+
 	public EventJournalSettings getJournalSettings() {
-		
+
 		if (journalSetting == null) {
 			// do not add anything below to not to capture anything
 			journalSetting = new EventJournalSettings()
 					.addMode(PersonMode.AtRecreation)
 					.addMode(PersonMode.AtRestaurant)
 					.addMode(PersonMode.AtWork)
-					.addMode(PersonMode.AtHome); 
+					.addMode(PersonMode.AtHome);
 		}
 		return journalSetting;
 	}
-	
+
 	// DATA COLLECTION AND LOGGING-RELATED METHODS END
 
 	// MISC METHODS
-	
+
 	public int getNumberOfPeopleByPlaceId(long id) {
-		return (int) this.getAgents().stream().filter(p -> p.getCurrentUnit() != null && p.getCurrentUnit().getId() == id).count();
+		return (int) this.getAgents().stream()
+				.filter(p -> p.getCurrentUnit() != null && p.getCurrentUnit().getId() == id).count();
 	}
 
 	public void incrementNumberOfAbondenedAgents() {
@@ -1790,7 +1804,6 @@ public class WorldModel extends SimState {
 		return null;
 	}
 
-
 	public static void doLoop(final Class c, String[] args) {
 		doLoop(new MakesSimState() {
 			public SimState newInstance(long seed, String[] args) {
@@ -1799,18 +1812,18 @@ public class WorldModel extends SimState {
 					String configurationPath = argumentForKey("-configuration",
 							args);
 					if (configurationPath == null)
-						configurationPath="/home/emo/Downloads/pol-m/modified.properties";
+						configurationPath = "/home/emo/Downloads/pol-m/modified.properties";
 
 					WorldParameters params = new WorldParameters();
 
 					if (configurationPath != null) {
 						params = new WorldParameters(configurationPath);
 					}
-					System.out.println("params: "+params.maps);
+					System.out.println("params: " + params.maps);
 
 					return (SimState) (c.getConstructor(new Class[] {
 							Long.TYPE, WorldParameters.class }).newInstance(new Object[] {
-							Long.valueOf(params.seed), params }));
+									Long.valueOf(params.seed), params }));
 				} catch (Exception e) {
 					throw new RuntimeException(
 							"Exception occurred while trying to construct the simulation "
@@ -1825,15 +1838,15 @@ public class WorldModel extends SimState {
 	}
 
 	public static void main(String[] args) {
-//		String[] modifiedArgs=new String[args.length+2];
-//		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
-//		modifiedArgs[args.length] = "-until";
-//		modifiedArgs[args.length + 1] = "8060";
-//		doLoop(WorldModel.class, modifiedArgs);
-//		String[] modifiedArgs = new String[args.length + 1];
-//		System.arraycopy(args, 0, modifiedArgs, 0, args.length);
-//		modifiedArgs[args.length] = "--add-opens=java.base/java.util=ALL-UNNAMED";
-//		doLoop(WorldModel.class, modifiedArgs);
+		// String[] modifiedArgs=new String[args.length+2];
+		// System.arraycopy(args, 0, modifiedArgs, 0, args.length);
+		// modifiedArgs[args.length] = "-until";
+		// modifiedArgs[args.length + 1] = "8060";
+		// doLoop(WorldModel.class, modifiedArgs);
+		// String[] modifiedArgs = new String[args.length + 1];
+		// System.arraycopy(args, 0, modifiedArgs, 0, args.length);
+		// modifiedArgs[args.length] = "--add-opens=java.base/java.util=ALL-UNNAMED";
+		// doLoop(WorldModel.class, modifiedArgs);
 		doLoop(WorldModel.class, args);
 		System.exit(0);
 	}
@@ -1845,15 +1858,15 @@ public class WorldModel extends SimState {
 	public QuantitiesOfInterest getQuantitiesOfInterest() {
 		return quantitiesOfInterest;
 	}
-	
+
 	public Map<Integer, List<Building>> getNeighborhoodBuildingMap() {
- 		return neighborhoodBuildingMap;
- 	}
-	
+		return neighborhoodBuildingMap;
+	}
+
 	public void addLogSchedule(LogSchedule schedule) {
 		logScheduler.add(schedule);
 	}
-	
+
 	public void changeRandomGeneratorState(Double times) {
 		// This will change the seed of the random number generator
 		random.setSeed(times.longValue());
