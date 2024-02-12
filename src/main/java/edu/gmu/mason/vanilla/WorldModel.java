@@ -213,14 +213,15 @@ public class WorldModel extends SimState {
 		// make sure to remove the remote.lock file after you could see the results on
 		// target folder.
 		// ratio1, ratio2, ratio3 are the weigth that is x+y+z=1
-		String fileContent = "sourceId, foundPos,foundPosId, placeRank, placeRatio, ratio1, ratio2, ratio3, params\n";
+		String fileContent = "foundSourceRatio,foundSourceId, sourceId, sourceRank, sourceRatio, ratio1, ratio2, ratio3, params\n";
 		String line = "";
 		int counter = 0;
 		double portion = 0.01;
+		double threshold = 0.1;
 		for (double i = 0.0; i <= 1.0; i += portion) {
 			for (double j = 0.0; j <= 1.0; j += portion) {
 				for (double k = 0.0; k <= 1.0; k += portion) {
-					if (i + j + k >= 1.0 + portion || i + j + k <= 1.0 - portion) {
+					if (i + j + k >= 1.0 + threshold || i + j + k <= 1.0 - threshold) {
 						continue;
 					}
 					counter++;
@@ -231,13 +232,14 @@ public class WorldModel extends SimState {
 					sourcing.sort(ratio1, ratio2, ratio3);
 					// sourcing.show(diseaseSource.getId());
 					long sourceId = diseaseSource.getId();
-					// TODO: Is foundPos the top ranked id?
-					double foundPos = sourcing.topRate();
-					long foundPosId = sourcing.topId();
+					// TODO: Is foundSourceRatio the top ranked id?
+					double foundSourceRatio = sourcing.topRate();
+					long foundSourceId = sourcing.topId();
 					double[] res = (sourcing.findPos(sourceId));
-					int placeRank = (int) res[0];
-					double placeRatio = res[1];
-					line = sourcing.getString(sourceId, foundPos, foundPosId, placeRank, placeRatio, ratio1, ratio2,
+					int sourceRank = (int) res[0];
+					double sourceRatio = res[1];
+					line = sourcing.getString(foundSourceRatio, foundSourceId, sourceId, sourceRank, sourceRatio,
+							ratio1, ratio2,
 							ratio3, params);
 					fileContent += line;
 				}
